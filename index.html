@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パラドックス罪状一覧 2025</title>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .login-container {
+            width: 300px;
+            margin: 100px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .login-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        
+        .login-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .header {
+            background-color: #e6f2ff;
+            color: #333;
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+            position: relative;
+        }
+        
+        .main-container {
+            display: block;
+        }
+        
+        .criminal-code {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .criminal-code th {
+            background-color: #003366;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .criminal-code td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        
+        .crime-category {
+            background-color: #b3d9ff;
+        }
+        
+        .fine-column {
+            background-color: #ffffcc;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .punishment-column {
+            background-color: #ffcccc;
+            width: 100px;
+            text-align: center;
+        }
+        
+        .delete-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: none;
+        }
+        
+        .action-column {
+            width: 60px;
+            text-align: center;
+            display: none;
+        }
+        
+        .add-row-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: none;
+        }
+        
+        .save-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .login-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .edit-mode {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: #ff9800;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: none;
+        }
+        
+        .edit-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 80px;
+            display: none;
+        }
+        
+        .save-button, .logout-button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .save-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .logout-button {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .section-header {
+            background-color: #003366;
+            color: white;
+            padding: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        
+        /* 編集モード時のみ表示するためのクラス */
+        .edit-mode-visible {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="overlay" class="overlay"></div>
+    
+    <div id="login-section" class="login-container">
+        <h2>ログイン</h2>
+        <input type="text" id="username" placeholder="ユーザーID">
+        <input type="password" id="password" placeholder="パスワード">
+        <button id="login-button">ログイン</button>
+    </div>
+    
+    <div id="edit-mode" class="edit-mode">編集モード</div>
+    
+    <div id="main-section" class="main-container">
+        <div class="header">
+            <h1 id="title">パラドックス罪状一覧 2025 ver1.0.0</h1>
+            <button id="user-login-button" class="login-button">👤</button>
+        </div>
+        
+        <div id="all-content">
+            <!-- 罪状の統合テーブル -->
+            <table class="criminal-code">
+                <thead>
+                    <tr>
+                        <th width="20%">刑法</th>
+                        <th width="60%">説明</th>
+                        <th width="10%">罰金</th>
+                        <th width="10%">刑務時間</th>
+                        <th width="5%" class="edit-mode-visible">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="code-body">
+                    <tr>
+                        <td class="crime-category">道路交通法違反</td>
+                        <td>
+                            • スピード違反 一般道 120km以上 高速道路 150km以上<br>
+                            • 交通の妨げになる行為（車道の真ん中で無機物駐車や停車をしている等）<br>
+                            • 免許不携帯 ※元に戻歩兵等の理由の場合罰無<br>
+                            • 赤信号を無視している<br>
+                            • ナンバープレートもステッカーで隠している<br>
+                            • ノーパーキングエリアで駐車をしている車両<br>
+                            • 反則無視進行<br>
+                            • 走行中に緊急など必要無粋な被害する<br>
+                            • トランク等を素人が勝手へ登ではない場所にプレイヤーを乗せる行為
+                        </td>
+                        <td class="fine-column">100,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">スプレー禁止罪</td>
+                        <td>
+                            所有者・所有者以外証・自分の活動以外への所有者の許可なしスプレーを現行で見つけた場合<br>
+                            または、写真の証拠付きで確認があった場合に適応<br>
+                            ※レーシングゲームロゴスプレーは許可済みの為許可無し
+                        </td>
+                        <td class="fine-column">100,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">賭博罪</td>
+                        <td>
+                            市に申請をしていない場所での賭博行為。<br>
+                            現在の許可場（カジノ、ストリップバー、レギオンスクエア、路上レストラン）
+                        </td>
+                        <td class="fine-column">200,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">暴行罪</td>
+                        <td>
+                            被害を与えたプレイヤーがいる場合の過度な暴力行為<br>
+                            監察、 救急隊の公務を妨害した場合。<br>
+                            公務執行妨害罪の範囲に立る場合、公務執行妨害罪に当てはまる被害事前に応える事。
+                        </td>
+                        <td class="fine-column">300,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">公務執行妨害罪</td>
+                        <td>
+                            公務執行妨害の例<br>
+                            • 尊上命令を無視する<br>
+                            • 公務員へ暴力を行う
+                        </td>
+                        <td class="fine-column">300,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">心無き市民殺人罪</td>
+                        <td>明らかな悪意を持った上でNPCを殺害する行為</td>
+                        <td class="fine-column">300,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">無免許運転</td>
+                        <td>正しいライセンスが取得されていない状態でその車両を運転する行為</td>
+                        <td class="fine-column">300,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">軽強盗罪</td>
+                        <td>軽強盗に当てはまる強盗や犯罪で捕まった場合</td>
+                        <td class="fine-column">500,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">軽強盗罪</td>
+                        <td>
+                            • 車両窃盗（スポーツカー、スーパーカー以外）※テスト期間中は車種に関与す「車両窃盗罪」のみで切る事<br>
+                            <br>
+                            • 空き巣<br>
+                            • ハッキング行為
+                        </td>
+                        <td class="fine-column">500,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">業務防害罪</td>
+                        <td>他業者スペースに侵入・大声を出す・迷惑にて業界たりする行為</td>
+                        <td class="fine-column">500,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">器物毀攻装着罪</td>
+                        <td>プレイヤーを拘束し,暴投、拉致、監禁をする行為</td>
+                        <td class="fine-column">1,000,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">強盗罪</td>
+                        <td>
+                            以下に当てはまる窃盗・強盗で捕まった場合<br><br>
+                            • コンビニ強盗<br>
+                            • ATM強盗<br>
+                            • 車両窃盗（スポーツカー、スーパーカー）※テスト期間中は車種に関与す「車両窃盗罪」のみで切る事<br>
+                            • 違法ダイビング<br>
+                            • ブースティング<br>
+                            以下に当てはまる窃盗・強盗で捕まった場合
+                        </td>
+                        <td class="fine-column">1,000,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">準重強盗罪</td>
+                        <td>
+                            • Fleeca銀行強盗<br>
+                            • 倉庫暴ハッキング強盗（チェイス不可 人質無効）<br>
+                            • 玉石回強盗<br>
+                            • ヨーマイトミッション（チェイス不可 人質無効）<br>
+                            • パレト銀行強盗 ※テスト期間中につき<br><br>
+                            ※これらの罪はIDした時点でプリズン行き確定
+                        </td>
+                        <td class="fine-column">2,000,000円</td>
+                        <td class="punishment-column">30min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">市民殺人及び未遂</td>
+                        <td>故な危害を与えない状態でプレイヤーを致命傷/ダウンさせる行為</td>
+                        <td class="fine-column">3,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">重強盗罪</td>
+                        <td>
+                            以下に当てはまる窃盗・強盗で捕まった場合<br><br>
+                            • ユニオンベイスト<br>
+                            • 宝薯窒盗強盗<br>
+                            • 飛行場貿易強盗<br>
+                            • オイルリグ強盗<br>
+                            • BOBCAT強盗<br>
+                            • ダイアモンドカシノ強盗<br>
+                            • パレト銀行強盗 ※テスト期間につき<br>
+                            • パシフィック銀行強盗<br>
+                            • アーティファクト強盗<br>
+                            • 金塊強盗<br>
+                            • ブースティングA S
+                        </td>
+                        <td class="fine-column">3,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">重窃盗罪</td>
+                        <td>
+                            心ある市民の住まいもしくはトランク、インベントリなどから金品を窃盗する行為<br>
+                            心ある市民の車両を許可なく私的に利用する行為
+                        </td>
+                        <td class="fine-column">3,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">収賄罪/汚職罪</td>
+                        <td>
+                            公務員が規定以外の賄賂やキックバックを受け取り、対象の利利になるように裏切りや憂き行為<br>
+                            公務員が強盗や犯罪ミッションに加担した場合もこの罪に当てはまる
+                        </td>
+                        <td class="fine-column">5,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">対象の公務員</td>
+                        <td>救急隊・監察・免許センター職員・弁護士・裁判官</td>
+                        <td class="fine-column"></td>
+                        <td class="punishment-column"></td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">テロ罪</td>
+                        <td>
+                            プレイヤーが動いている病院や警察署、救急吾輩に爆発や被害を行う行為<br>
+                            会白線の関係者がギャングに対して被害を受けた場合,扱われる起こすことができる行為<br>
+                            会白線が所有しているエリア、 路肋にギャンクが主催り行為を行った場合も含む
+                        </td>
+                        <td class="fine-column">10,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">警察署/病院襲撃罪</td>
+                        <td>マップ上の警察もしくは病院施設の建物に対して行う強投や被害行為</td>
+                        <td class="fine-column">30,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">誘拐/拉致罪</td>
+                        <td>
+                            プレイヤーや囚体を無理たり、縄したりして拉致を携よとする行為に起因。<br>
+                            人質を拉俊したり、人質がいないのに居ると伝えることも起訴では素る。
+                        </td>
+                        <td class="fine-column">10,000,000円</td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">私文書偽造罪</td>
+                        <td>
+                            個人や市や公共団体が公布した各種書類を偽造・変造する犯罪<br>
+                            対象　運転免許証　IDカード　ガンライセンスの偽造
+                        </td>
+                        <td class="fine-column">50,000,000円</td>
+                        <td class="punishment-column">無</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">共犯罪</td>
+                        <td>
+                            白市民パスを叉得されている状態で、白市民パスの特権を使用する行為。<br>
+                            個人基や集団犯での他権の犯罪現場で集団犯の逃走を確前したことが、証拠・双方理楯で確認できた場合<br><br>
+                            ※金金をもらった人間になった場合も共犯罪になります。<br><br>
+                            自身の車両や持ってきた車両を現行犯に貸す行為は犯と石る。
+                        </td>
+                        <td class="fine-column"></td>
+                        <td class="punishment-column"></td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">共犯罪</td>
+                        <td>個人基や集団犯では心い他権の犯罪現場でダウンして集団犯の逃走を確前したことか、証拠・双方理楯で確認できた場合</td>
+                        <td class="fine-column">3,000,000円</td>
+                        <td class="punishment-column">30min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">セカハラ罪</td>
+                        <td>被害者の申請により対応すること。クリップ（ボディカメラ）等を装備しておくこと等。</td>
+                        <td class="fine-column">1~100万円まで</td>
+                        <td class="punishment-column">無し~20min まで</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">危険物所持</td>
+                        <td>
+                            危険物および違法薬物は破棄しない限り、速やかに警察に届け出る必要がある。<br>
+                            白市民パス所持者が届け出た時、銃等の危険物の所持を希望する場合はシリアル登録を行う事。
+                        </td>
+                        <td class="fine-column">
+                            1~4個<br>
+                            1,000,000円罰金<br><br>
+                            10個~<br>
+                            3,000,000円罰金<br><br>
+                            100個~<br>
+                            5,000,000円罰金
+                        </td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">違法薬物所持罪</td>
+                        <td>
+                            使用については禁に応じて罰になる。<br>
+                            所持していた場合、その個に応じて罰になる。<br><br>
+                            対象ドラッグ<br>
+                            ・ハッピーパウダー<br>
+                            ・スーパースター<br>
+                            ・メタコパニア<br>
+                            ・ハッピーフラワー（半製）<br>
+                            ・スターフラワー（半製）<br>
+                            ・メタコフラワー（半製）<br>
+                            ・ポイズン~毒キノコから生成する危危薬
+                        </td>
+                        <td class="fine-column">
+                            1~4個<br>
+                            200,000円罰金<br><br>
+                            5~9個<br>
+                            500,000円罰金<br><br>
+                            10個~<br>
+                            1,000,000円罰金<br><br>
+                            100個~<br>
+                            2,000,000円罰金<br><br>
+                            生成取引の場合罪<br>
+                            3,000,000円罰金
+                        </td>
+                        <td class="punishment-column">60min</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">共犯罪</td>
+                        <td>
+                            罰金50万円以上の犯罪から証跡があり、協力していることが明らかな場合に共犯として扱分される。<br>
+                            上記以外は犯罪を実行した当事者のみが制裁される。<br>
+                            監察と犯罪者間で現場が分かりたとした場合、その場で裁めずに裁判にする。
+                        </td>
+                        <td class="fine-column">主犯と同じ罪状</td>
+                        <td class="punishment-column">主犯と同じ</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 法律の規定セクション - 別セクションとして維持 -->
+            <div class="section-header">法律の補足</div>
+            
+            <table class="criminal-code">
+                <thead>
+                    <tr>
+                        <th width="20%">項目</th>
+                        <th width="80%">説明</th>
+                        <th width="5%" class="edit-mode-visible">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="code-body4">
+                    <tr>
+                        <td class="crime-category">1</td>
+                        <td>同じ状犯で罰金を重複して課ぺしてはならない</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">2</td>
+                        <td>例）警察官を間人ダウンさせたとしてもプレイヤー殺人及び未遂を重複適用させてはならない</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">3</td>
+                        <td>
+                            罰金の合計額が300万円以上の犯罪を現行で取り押さえなかった場合、<br>
+                            Discordの監察からのお知らせに記載してから48時間後にその犯罪に時効が来るまで捜査することができる。<br>
+                            罰金50万円以上の犯罪で逮捕された時に車両を押収できる。（罰金の合計額に依らない）<br>
+                            押収期間は最大で24時間とし、 在庫は100万円で固定する
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">4</td>
+                        <td>
+                            個人若くは違法集団での犯罪を犯している者側のメンバーを優先的に逮捕し、その結果その犯罪集団の活動を支援した場合、<br>
+                            その監察は反監察罪の罰則を受けることになります。
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">5</td>
+                        <td>
+                            監察は犯罪者側で現場にプレイヤーに対して捜出せませんが、捜出できた犯罪者を検挙することが犯罪現場となります。<br>
+                            また、監察は犯罪の目撃で同じく犯罪現場となります。
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">6</td>
+                        <td>
+                            監察は顔を平分以上隠している市民を商売している市民に対して、強制的に職務質問を行うことができる。<br>
+                            勧告書の場合在場合, 所持品確認場合、銃器と身元の確認。
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">7</td>
+                        <td>
+                            → 応じない場合公務執行妨害となる。
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">8</td>
+                        <td>
+                            ※顔を隠していないプレイヤーに関しては、監察はタブレットで犯罪者の顔を把握してるので通報を行う事ができる。<br>
+                            違法な通話形式による執拗な取締り、違法を固めた場合は公務執行妨害罪及び免許取り消しとなる。
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">9</td>
+                        <td>
+                            ケガと公共の安全の危機が取り締まり対象者に加わる場合、最悪も先に確保する。<br>
+                            ※これは同じプレイヤーの別キャラクターで犯罪を行った場合にも適用されます。
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">10</td>
+                        <td>
+                            ※逃走してダウンでなくなくプレイヤーはID一律 (罰金30万円)<br>
+                            ○○○へ住宅入れられたが、貯まらない人に向けて空き家を開放<br>
+                            ○○○に主装置の中身を確認
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                    <tr>
+                        <td class="crime-category">11</td>
+                        <td>
+                            ○罰金のトータルが300万円以上場合はプリズン行き確定<br>
+                            ※時間に関しては犯した罪の内容を確認
+                        </td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <button id="add-row" class="add-row-button">新しい行を追加</button>
+    </div>
+    
+    <div id="save-notification" class="save-notification">
+        変更が保存されました
+    </div>
+    
+    <div class="edit-buttons" id="edit-buttons">
+        <button class="save-button" id="save-button">保存</button>
+        <button class="logout-button" id="logout-button">ログアウト</button>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+        
+        // Login button on top right corner
+        document.getElementById('user-login-button').addEventListener('click', function() {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        });
+        
+        // Login functionality
+        document.getElementById('login-button').addEventListener('click', function() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Check credentials (hardcoded for this example as requested)
+            if (username === 'aim' && password === '123123123') {
+                isLoggedIn = true;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('overlay').style.display = 'none';
+                
+                // Enable editing mode
+                enableEditMode();
+                document.getElementById('edit-mode').style.display = 'block';
+                
+                // Show add row button and edit buttons
+                document.getElementById('add-row').style.display = 'block';
+                document.getElementById('edit-buttons').style.display = 'block';
+                
+                // Show edit-mode-visible elements
+                const editModeElements = document.querySelectorAll('.edit-mode-visible');
+                editModeElements.forEach(element => {
+                    element.style.display = 'table-cell';
+                });
+                
+                // Show delete buttons
+                const deleteButtons = document.querySelectorAll('.delete-button');
+                deleteButtons.forEach(button => {
+                    button.style.display = 'inline-block';
+                });
+            } else {
+                alert('ログイン情報が正しくありません。');
+            }
+        });
+        
+        // Close overlay when clicking outside the login box
+        document.getElementById('overlay').addEventListener('click', function() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        });
+        
+        // Enable editing mode function
+        function enableEditMode() {
+            // Make title editable
+            document.getElementById('title').setAttribute('contenteditable', 'true');
+            
+            // Make all cells editable
+            const cells = document.querySelectorAll('td:not(.action-column)');
+            cells.forEach(cell => {
+                cell.setAttribute('contenteditable', 'true');
+            });
+        }
+        
+        // Add delete button functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-button')) {
+                if (confirm('この行を削除してもよろしいですか？')) {
+                    e.target.closest('tr').remove();
+                    showSaveNotification();
+                }
+            }
+        });
+        
+        // Add save button functionality
+        document.getElementById('save-button').addEventListener('click', function() {
+            showSaveNotification();
+            alert('変更が保存されました');
+        });
+        
+        // Add logout button functionality
+        document.getElementById('logout-button').addEventListener('click', function() {
+            isLoggedIn = false;
+            
+            // Disable editing mode
+            disableEditMode();
+            document.getElementById('edit-mode').style.display = 'none';
+            
+            // Hide buttons
+            document.getElementById('add-row').style.display = 'none';
+            document.getElementById('edit-buttons').style.display = 'none';
+            
+            // Hide edit-mode-visible elements
+            const editModeElements = document.querySelectorAll('.edit-mode-visible');
+            editModeElements.forEach(element => {
+                element.style.display = 'none';
+            });
+            
+            // Hide delete buttons
+            const deleteButtons = document.querySelectorAll('.delete-button');
+            deleteButtons.forEach(button => {
+                button.style.display = 'none';
+            });
+            
+            alert('ログアウトしました');
+        });
+        
+        // Disable editing mode function
+        function disableEditMode() {
+            // Make title non-editable
+            document.getElementById('title').removeAttribute('contenteditable');
+            
+            // Make all cells non-editable
+            const cells = document.querySelectorAll('td');
+            cells.forEach(cell => {
+                cell.removeAttribute('contenteditable');
+            });
+        }
+        
+        // Add new row functionality
+        document.getElementById('add-row').addEventListener('click', function() {
+            // Check which table is visible/active
+            const lastSectionHeader = document.querySelector('.section-header:last-of-type');
+            
+            // If the last section is "法律の規定", add to that table
+            if (lastSectionHeader && lastSectionHeader.textContent === '法律の規定') {
+                const lawRulesTable = document.getElementById('code-body4');
+                const newRow = document.createElement('tr');
+                
+                newRow.innerHTML = `
+                    <td class="crime-category" contenteditable="true">新しい項目</td>
+                    <td contenteditable="true">説明を入力してください</td>
+                    <td class="action-column edit-mode-visible"><button class="delete-button" style="display: inline-block;">削除</button></td>
+                `;
+                
+                lawRulesTable.appendChild(newRow);
+            } else {
+                // Otherwise add to the main criminal code table
+                const criminalCodeTable = document.getElementById('code-body');
+                const newRow = document.createElement('tr');
+                
+                newRow.innerHTML = `
+                    <td class="crime-category" contenteditable="true">新しい罪名</td>
+                    <td contenteditable="true">説明を入力してください</td>
+                    <td class="fine-column" contenteditable="true">0円</td>
+                    <td class="punishment-column" contenteditable="true">無</td>
+                    <td class="action-column edit-mode-visible"><button class="delete-button" style="display: inline-block;">削除</button></td>
+                `;
+                
+                criminalCodeTable.appendChild(newRow);
+            }
+            
+            showSaveNotification();
+        });
+        
+        // Show temporary save notification
+        function showSaveNotification() {
+            const notification = document.getElementById('save-notification');
+            notification.style.display = 'block';
+            
+            // Hide notification after 2 seconds
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Add notification when content is edited
+        document.addEventListener('input', function(e) {
+            if (e.target.hasAttribute('contenteditable')) {
+                showSaveNotification();
+            }
+        });
+    </script>
+</body>
+</html>
