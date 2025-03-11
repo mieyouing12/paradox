@@ -662,6 +662,11 @@
     <script>
         let isLoggedIn = false;
         
+        // ページ読み込み時に保存されたデータがあれば読み込む
+        window.addEventListener('DOMContentLoaded', function() {
+            loadAllContent();
+        });
+        
         // Login button on top right corner
         document.getElementById('user-login-button').addEventListener('click', function() {
             document.getElementById('login-section').style.display = 'block';
@@ -726,6 +731,7 @@
             if (e.target.classList.contains('delete-button')) {
                 if (confirm('この行を削除してもよろしいですか？')) {
                     e.target.closest('tr').remove();
+                    saveAllContent(); // 削除したらすぐに保存
                     showSaveNotification();
                 }
             }
@@ -733,6 +739,7 @@
         
         // Add save button functionality
         document.getElementById('save-button').addEventListener('click', function() {
+            saveAllContent();
             showSaveNotification();
             alert('変更が保存されました');
         });
@@ -781,8 +788,8 @@
             // Check which table is visible/active
             const lastSectionHeader = document.querySelector('.section-header:last-of-type');
             
-            // If the last section is "法律の規定", add to that table
-            if (lastSectionHeader && lastSectionHeader.textContent === '法律の規定') {
+            // If the last section is "法律の補足", add to that table
+            if (lastSectionHeader && lastSectionHeader.textContent === '法律の補足') {
                 const lawRulesTable = document.getElementById('code-body4');
                 const newRow = document.createElement('tr');
                 
@@ -809,6 +816,7 @@
                 criminalCodeTable.appendChild(newRow);
             }
             
+            saveAllContent(); // 行を追加したらすぐに保存
             showSaveNotification();
         });
         
@@ -827,6 +835,113 @@
         document.addEventListener('input', function(e) {
             if (e.target.hasAttribute('contenteditable')) {
                 showSaveNotification();
+            }
+        });
+        
+        // Function to save all table data to localStorage
+        function saveAllContent() {
+            // Save the title
+            const title = document.getElementById('title').innerText;
+            localStorage.setItem('paradox_title', title);
+            
+            // Save main criminal code table
+            const mainTableRows = document.getElementById('code-body').rows;
+            const mainTableData = [];
+            
+            for (let i = 0; i < mainTableRows.length; i++) {
+                const row = mainTableRows[i];
+                const rowData = {
+                    category: row.cells[0].innerHTML,
+                    description: row.cells[1].innerHTML,
+                    fine: row.cells[2].innerHTML,
+                    punishment: row.cells[3].innerHTML
+                };
+                mainTableData.push(rowData);
+            }
+            
+            localStorage.setItem('paradox_main_table', JSON.stringify(mainTableData));
+            
+            // Save law rules table
+            const lawTableRows = document.getElementById('code-body4').rows;
+            const lawTableData = [];
+            
+            for (let i = 0; i < lawTableRows.length; i++) {
+                const row = lawTableRows[i];
+                const rowData = {
+                    item: row.cells[0].innerHTML,
+                    description: row.cells[1].innerHTML
+                };
+                lawTableData.push(rowData);
+            }
+            
+            localStorage.setItem('paradox_law_table', JSON.stringify(lawTableData));
+        }
+        
+        // Function to load all saved data from localStorage
+        function loadAllContent() {
+            // Load title
+            const savedTitle = localStorage.getItem('paradox_title');
+            if (savedTitle) {
+                document.getElementById('title').innerText = savedTitle;
+            }
+            
+            // Load main criminal code table
+            const savedMainTable = localStorage.getItem('paradox_main_table');
+            if (savedMainTable) {
+                const mainTableData = JSON.parse(savedMainTable);
+                const mainTableBody = document.getElementById('code-body');
+                
+                // Clear existing rows
+                mainTableBody.innerHTML = '';
+                
+                // Add saved rows
+                for (const rowData of mainTableData) {
+                    const newRow = document.createElement('tr');
+                    
+                    newRow.innerHTML = `
+                        <td class="crime-category">${rowData.category}</td>
+                        <td>${rowData.description}</td>
+                        <td class="fine-column">${rowData.fine}</td>
+                        <td class="punishment-column">${rowData.punishment}</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    `;
+                    
+                    mainTableBody.appendChild(newRow);
+                }
+            }
+            
+            // Load law rules table
+            const savedLawTable = localStorage.getItem('paradox_law_table');
+            if (savedLawTable) {
+                const lawTableData = JSON.parse(savedLawTable);
+                const lawTableBody = document.getElementById('code-body4');
+                
+                // Clear existing rows
+                lawTableBody.innerHTML = '';
+                
+                // Add saved rows
+                for (const rowData of lawTableData) {
+                    const newRow = document.createElement('tr');
+                    
+                    newRow.innerHTML = `
+                        <td class="crime-category">${rowData.item}</td>
+                        <td>${rowData.description}</td>
+                        <td class="action-column edit-mode-visible"><button class="delete-button">削除</button></td>
+                    `;
+                    
+                    lawTableBody.appendChild(newRow);
+                }
+            }
+        }
+        
+        // 自動保存機能を追加（編集後5秒間隔で保存）
+        let saveTimeout;
+        document.addEventListener('input', function(e) {
+            if (e.target.hasAttribute('contenteditable')) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(function() {
+                    saveAllContent();
+                }, 5000);
             }
         });
     </script>
