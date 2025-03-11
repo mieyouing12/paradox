@@ -169,7 +169,7 @@
             display: none;
         }
         
-        .save-button, .logout-button {
+        .save-button, .logout-button, .toggle-html-button, .apply-html-button {
             padding: 10px 20px;
             margin-right: 10px;
             border: none;
@@ -188,6 +188,17 @@
             color: white;
         }
         
+        .toggle-html-button {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .apply-html-button {
+            background-color: #ff9800;
+            color: white;
+            display: none;
+        }
+        
         .section-header {
             background-color: #003366;
             color: white;
@@ -199,6 +210,20 @@
         /* 編集モード時のみ表示するためのクラス */
         .edit-mode-visible {
             display: none;
+        }
+        
+        /* HTML編集エリア */
+        .html-editor {
+            width: 100%;
+            height: 600px;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            display: none;
+            margin-bottom: 20px;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -647,7 +672,11 @@
             </table>
         </div>
         
+        <!-- HTML編集エリア -->
+        <textarea id="html-editor" class="html-editor"></textarea>
+        
         <button id="add-row" class="add-row-button">新しい行を追加</button>
+        <button id="apply-html" class="apply-html-button">HTML適用</button>
     </div>
     
     <div id="save-notification" class="save-notification">
@@ -656,11 +685,13 @@
     
     <div class="edit-buttons" id="edit-buttons">
         <button class="save-button" id="save-button">保存</button>
+        <button class="toggle-html-button" id="toggle-html-button">HTML編集モード</button>
         <button class="logout-button" id="logout-button">ログアウト</button>
     </div>
 
     <script>
         let isLoggedIn = false;
+        let isHtmlMode = false;
         
         // ページ読み込み時に保存されたデータがあれば読み込む
         window.addEventListener('DOMContentLoaded', function() {
@@ -744,9 +775,70 @@
             alert('変更が保存されました');
         });
         
+        // Toggle HTML edit mode
+        document.getElementById('toggle-html-button').addEventListener('click', function() {
+            isHtmlMode = !isHtmlMode;
+            
+            if (isHtmlMode) {
+                // Switch to HTML editing mode
+                document.getElementById('all-content').style.display = 'none';
+                document.getElementById('add-row').style.display = 'none';
+                document.getElementById('html-editor').style.display = 'block';
+                document.getElementById('apply-html').style.display = 'inline-block';
+                document.getElementById('toggle-html-button').textContent = 'テーブル編集モード';
+                
+                // Get the current HTML content and put it in the editor
+                const htmlContent = document.getElementById('all-content').innerHTML;
+                document.getElementById('html-editor').value = htmlContent;
+            } else {
+                // Switch back to table editing mode
+                document.getElementById('all-content').style.display = 'block';
+                document.getElementById('add-row').style.display = 'inline-block';
+                document.getElementById('html-editor').style.display = 'none';
+                document.getElementById('apply-html').style.display = 'none';
+                document.getElementById('toggle-html-button').textContent = 'HTML編集モード';
+            }
+        });
+        
+        // Apply HTML button functionality
+        document.getElementById('apply-html').addEventListener('click', function() {
+            try {
+                const htmlContent = document.getElementById('html-editor').value;
+                document.getElementById('all-content').innerHTML = htmlContent;
+                
+                // Re-enable edit mode for the new content
+                enableEditMode();
+                
+                // Show edit-mode-visible elements in the new content
+                const editModeElements = document.querySelectorAll('.edit-mode-visible');
+                editModeElements.forEach(element => {
+                    element.style.display = 'table-cell';
+                });
+                
+                // Show delete buttons in the new content
+                const deleteButtons = document.querySelectorAll('.delete-button');
+                deleteButtons.forEach(button => {
+                    button.style.display = 'inline-block';
+                });
+                
+                saveAllContent(); // HTMLを適用したらすぐに保存
+                showSaveNotification();
+                alert('HTMLが適用されました');
+            } catch (error) {
+                alert('HTMLの適用中にエラーが発生しました: ' + error.message);
+            }
+        });
+        
         // Add logout button functionality
         document.getElementById('logout-button').addEventListener('click', function() {
             isLoggedIn = false;
+            isHtmlMode = false;
+            
+            // Switch back to table view if in HTML mode
+            document.getElementById('all-content').style.display = 'block';
+            document.getElementById('html-editor').style.display = 'none';
+            document.getElementById('apply-html').style.display = 'none';
+            document.getElementById('toggle-html-button').textContent = 'HTML編集モード';
             
             // Disable editing mode
             disableEditMode();
@@ -844,7 +936,11 @@
             const title = document.getElementById('title').innerText;
             localStorage.setItem('paradox_title', title);
             
-            // Save main criminal code table
+            // Save all content HTML
+            const allContent = document.getElementById('all-content').innerHTML;
+            localStorage.setItem('paradox_all_content', allContent);
+            
+            // Save main criminal code table separately for backward compatibility
             const mainTableRows = document.getElementById('code-body').rows;
             const mainTableData = [];
             
@@ -861,7 +957,7 @@
             
             localStorage.setItem('paradox_main_table', JSON.stringify(mainTableData));
             
-            // Save law rules table
+            // Save law rules table separately for backward compatibility
             const lawTableRows = document.getElementById('code-body4').rows;
             const lawTableData = [];
             
@@ -879,12 +975,24 @@
         
         // Function to load all saved data from localStorage
         function loadAllContent() {
-            // Load title
+            // Check if we have the full HTML content saved
+            const savedAllContent = localStorage.getItem('paradox_all_content');
+            if (savedAllContent) {
+                document.getElementById('all-content').innerHTML = savedAllContent;
+            } else {
+                // Otherwise load from the individual table data
+                loadTablesFromIndividualData();
+            }
+            
+            // Load title separately (as it's outside the all-content div)
             const savedTitle = localStorage.getItem('paradox_title');
             if (savedTitle) {
                 document.getElementById('title').innerText = savedTitle;
             }
-            
+        }
+        
+        // Function to load tables from individual data (for backward compatibility)
+        function loadTablesFromIndividualData() {
             // Load main criminal code table
             const savedMainTable = localStorage.getItem('paradox_main_table');
             if (savedMainTable) {
@@ -937,7 +1045,7 @@
         // 自動保存機能を追加（編集後5秒間隔で保存）
         let saveTimeout;
         document.addEventListener('input', function(e) {
-            if (e.target.hasAttribute('contenteditable')) {
+            if (e.target.hasAttribute('contenteditable') || e.target.id === 'html-editor') {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(function() {
                     saveAllContent();
